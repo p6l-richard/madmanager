@@ -14,11 +14,14 @@ export default async function handler(req, res) {
   const bucket = storage.bucket(process.env.BUCKET_NAME);
 
   console.log("--- setting cors ---");
+  console.log("origin: ", process.env.VERCEL_URL);
   await bucket.setCorsConfiguration([
     {
       maxAgeSeconds: 60, //  1 minute
       method: ["POST"],
-      origin: ["http://localhost:3000", "http://localhost:3000/"], // allow localhost
+      origin: [
+        process.env.VERCEL ? process.env.VERCEL_URL : "http://localhost:3000",
+      ], // allow localhost
       responseHeader: ["Access-Control-Allow-Origin"], // necessary for the preflight to pass
     },
   ]);
