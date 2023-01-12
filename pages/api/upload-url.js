@@ -20,8 +20,10 @@ export default async function handler(req, res) {
       maxAgeSeconds: 60, //  1 minute
       method: ["POST"],
       origin: [
-        process.env.VERCEL ? process.env.VERCEL_URL : "http://localhost:3000",
-      ], // allow localhost
+        process.env.NODE_ENV === "development"
+          ? "http://localhost:3000"
+          : "https://madmanager.vercel.app", // VERCEL_URL contains the hash as well
+      ],
       responseHeader: ["Access-Control-Allow-Origin"], // necessary for the preflight to pass
     },
   ]);
