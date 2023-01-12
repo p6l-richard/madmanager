@@ -1,9 +1,11 @@
 export default function Upload() {
   const uploadPhoto = async (e) => {
+    console.log("uploading photo");
     const file = e.target.files[0];
     const filename = encodeURIComponent(file.name);
     const res = await fetch(`/api/upload-url?file=${filename}`);
     const { url, fields } = await res.json();
+    console.log("url", url);
     const formData = new FormData();
 
     Object.entries({ ...fields, file }).forEach(([key, value]) => {
@@ -11,14 +13,14 @@ export default function Upload() {
     });
 
     const upload = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       body: formData,
     });
 
     if (upload.ok) {
-      console.log('Uploaded successfully!');
+      console.log("Uploaded successfully!");
     } else {
-      console.error('Upload failed.');
+      console.error("Upload failed.");
     }
   };
 

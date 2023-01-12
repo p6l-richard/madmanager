@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-gcp-storage",
+  "name": "madmanager",
   "main": "index.js",
   "scripts": {
     "build": "next build",
@@ -7,9 +7,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@google-cloud/storage": "^5.4.0",
-    "@pulumi/gcp": "^4.0.0",
-    "@pulumi/pulumi": "^2.0.0",
+    "@google-cloud/storage": "^5.20.5",
     "next": "^10.0.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
