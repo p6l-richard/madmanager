@@ -3,7 +3,7 @@
   "main": "index.js",
   "scripts": {
     "build": "next build",
-    "dev": "NODE_OPTIONS='--inspect' next dev",
+    "dev": "next",
     "start": "next start"
   },
   "dependencies": {

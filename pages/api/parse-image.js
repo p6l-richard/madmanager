@@ -34,8 +34,7 @@ export default async function handler(req, res) {
   console.log("FILE NAME: ", fileName);
   console.log("METADATA: ");
   console.dir(fileMetadata);
-  const gcsOutputPrefix = "SALARY-FORM-PARSE-RESPONSE/";
-  const gcsOutputUri = `gs://${process.env.BUCKET_NAME}/${gcsOutputPrefix}`;
+  const gcsOutputUri = `gs://${process.env.BUCKET_NAME}/${process.env.GCS_OUTPUT_PREFIX}`;
   const request = {
     name,
     inputDocuments: {
@@ -55,6 +54,9 @@ export default async function handler(req, res) {
     },
   };
 
+  const processor = await client.getProcessor({ name });
+  console.log("PROCESSOR: ", processor);
+
   // Process the document
   try {
     console.log("Batch processing...");
@@ -71,7 +73,7 @@ export default async function handler(req, res) {
     const file = bucket.file(
       // subfolder(s) + /0/ + filename
       `${
-        gcsOutputPrefix + operation.name.split("/").pop()
+        process.env.GCS_OUTPUT_PREFIX + operation.name.split("/").pop()
       }/0/${fileName.replace(
         /(\.jpeg)/,
         "-0.json" // '-0' is added automatically?

@@ -1,9 +1,22 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "react-query";
+import Link from "next/link";
 
 export default function Homepage() {
   return (
     <>
+      <header className="flex items-center justify-between p-3 bg-gray-800">
+        <Link href="/" className="font-medium text-white hover:text-gray-600">
+          Home
+        </Link>
+        <Link
+          href="/parsed-images"
+          className="font-medium text-white hover:text-gray-600"
+        >
+          Parsed images
+        </Link>
+      </header>
+
       <Gallery />
       <Upload />
     </>
@@ -138,7 +151,7 @@ const Gallery = () => {
                     className="w-full px-4 py-2 font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-700"
                     onClick={() => parseImageMutation.mutate(selectedImage.url)}
                   >
-                    Parse salary data
+                    Parse Image with AI
                   </button>
                 )}
                 <img
