@@ -52,15 +52,17 @@ const parseSalaryDataFromText = (responseText) => {
   // each player is detected by matching the regex \w\.\w+, e.g. "D.Leonard".
   const bodyRows = [];
 
-  for (let i = 0; i < bodyDataTrimmed.length; i += headerRow.length) {
+  for (let i = 0; i < bodyDataTrimmed.length; i++) {
     const row = bodyDataTrimmed.slice(i, i + headerRow.length);
     console.log(
       "checking...:",
       row[0] + "  " + row[0].match(/[A-Z]\.[A-Z]\w+/)
     );
+    // only push if the first element is a player name
     if (row[0].match(/[A-Z]\.[A-Z]\w+/)) {
       // player name detected
       bodyRows.push(row); // store the player values
+      i += headerRow.length; // skip to the next row, where a row contains the length of headerRow as elements
     }
   }
 
