@@ -4,7 +4,6 @@ export default async function handler(req, res) {
   console.log("creating a presigned url for GCP");
   const storage = new Storage({
     projectId: process.env.PROJECT_ID,
-    // keyFile: "~.config/gcloud/application_default_credentials.json",
     credentials: {
       client_email: process.env.CLIENT_EMAIL,
       private_key: process.env.PRIVATE_KEY,

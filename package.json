@@ -3,13 +3,18 @@
   "main": "index.js",
   "scripts": {
     "build": "next build",
-    "dev": "next",
+    "dev": "NODE_OPTIONS='--inspect' next dev",
     "start": "next start"
   },
   "dependencies": {
+    "@google-cloud/documentai": "^6.2.0",
     "@google-cloud/storage": "^5.20.5",
+    "autoprefixer": "^10.4.13",
     "next": "^13.1.1",
+    "postcss": "^8.4.21",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-query": "^3.39.2",
+    "tailwindcss": "^3.2.4"
   }
 }
