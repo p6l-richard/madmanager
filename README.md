@@ -17,6 +17,7 @@ Retrieve your existing project ID, bucket name, and service account email and pr
 2. Create a new [service account](https://console.cloud.google.com/iam-admin/serviceaccounts) with a role of `Storage Admin`.
    -  Click "Create Key" and save the JSON file.
    - Note: Copy the e-mail of the service account and under `IAM` > `Manage Roles` grant the role `Storage Admin` to the principal with the email of the service account.
+   - It should look like this: [IAM permissions](https://share.cleanshot.com/lglDc48g)
 3. Create a new Cloud Storage bucket (you need to enable the API first)
 4. Run `pnpm i` to install all deps
 5.  Run `pnpm dev` to start the Next app at `localhost:3000`.
