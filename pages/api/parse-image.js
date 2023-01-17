@@ -19,7 +19,13 @@ export default async function handler(req, res) {
   const processorId = "6e78d7e6be7beb2a";
 
   // Instantiate the client
-  const client = new DocumentProcessorServiceClient();
+  const client = new DocumentProcessorServiceClient({
+    projectId: process.env.PROJECT_ID,
+    credentials: {
+      client_email: process.env.CLIENT_EMAIL,
+      private_key: process.env.PRIVATE_KEY,
+    },
+  });
 
   // The full resource name of the processor
   const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
