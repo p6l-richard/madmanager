@@ -3,6 +3,10 @@ import { Storage } from "@google-cloud/storage";
 
 // a handler to parse send an image to the google cloud document ai api and persist it in the google cloud storage, then return the parsed data
 export default async function handler(req, res) {
+  // TODO: Remove the Storage client here, not necessary as I only need:
+  // - file name,
+  // - contentType
+  // both of which I can possible get in a different way?
   const storage = new Storage({
     projectId: process.env.PROJECT_ID,
     credentials: {

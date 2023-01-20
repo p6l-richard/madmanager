@@ -28,6 +28,7 @@ const uploadPhoto = async (e) => {
   const file = e.target.files[0];
   console.log("file to upload", file);
   const filename = encodeURIComponent(file.name);
+  // obtain a presigned url to upload to Google Cloud Storage
   const res = await fetch(`/api/upload-url?file=${filename}`);
   const { url, fields } = await res.json();
   console.log("url", url);
