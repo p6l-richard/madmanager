@@ -1,4 +1,4 @@
-import { Storage } from "@google-cloud/storage";
+import { Storage } from "@google-cloud/storage"
 
 // a handler to fetch all photos from the GCP bucket
 export default async function handler(req, res) {
@@ -8,18 +8,18 @@ export default async function handler(req, res) {
       client_email: process.env.CLIENT_EMAIL,
       private_key: process.env.PRIVATE_KEY,
     },
-  });
+  })
 
-  const bucket = storage.bucket(process.env.BUCKET_NAME);
+  const bucket = storage.bucket(process.env.BUCKET_NAME)
 
-  const [files] = await bucket.getFiles();
+  const [files] = await bucket.getFiles()
 
   const photos = files.flatMap((file) => {
     // if file is stores in output folder, ignore it
-    if (file.name.includes("SALARY-FORM-PARSE-RESPONSE/")) return [];
+    if (file.name.includes("SALARY-FORM-PARSE-RESPONSE/")) return []
     // else return the public url of the file
-    return { url: file.publicUrl() };
-  });
+    return { url: file.publicUrl() }
+  })
 
-  res.status(200).json(photos);
+  res.status(200).json(photos)
 }

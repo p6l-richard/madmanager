@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { useMutation, useQuery } from "react-query";
-import Link from "next/link";
+"use client"
+
+import { useState } from "react"
+import Link from "next/link"
+import { useMutation, useQuery } from "@tanstack/react-query"
 
 export default function Homepage() {
   return (
@@ -20,43 +22,43 @@ export default function Homepage() {
       <Gallery />
       <Upload />
     </>
-  );
+  )
 }
 // UPLOAD
 const uploadPhoto = async (e) => {
-  console.log("uploading photo");
-  const file = e.target.files[0];
-  console.log("file to upload", file);
-  const filename = encodeURIComponent(file.name);
+  console.log("uploading photo")
+  const file = e.target.files[0]
+  console.log("file to upload", file)
+  const filename = encodeURIComponent(file.name)
   // obtain a presigned url to upload to Google Cloud Storage
-  const res = await fetch(`/api/upload-url?file=${filename}`);
-  const { url, fields } = await res.json();
-  console.log("url", url);
-  const formData = new FormData();
+  const res = await fetch(`/api/upload-url?file=${filename}`)
+  const { url, fields } = await res.json()
+  console.log("url", url)
+  const formData = new FormData()
 
   Object.entries({ ...fields, file }).forEach(([key, value]) => {
-    formData.append(key, value);
-  });
+    formData.append(key, value)
+  })
 
   const upload = await fetch(url, {
     method: "POST",
     body: formData,
-  });
+  })
 
   if (!upload.ok) {
-    console.error(upload);
-    throw Error("Upload failed.");
+    console.error(upload)
+    throw Error("Upload failed.")
   }
-  console.log({ upload });
-  return { success: true };
-};
+  console.log({ upload })
+  return { success: true }
+}
 
 const Upload = () => {
   const upload = useMutation(["upload"], uploadPhoto, {
     onSuccess: () => {
-      queryClient.invalidateQueries(["photos"]);
+      queryClient.invalidateQueries(["photos"])
     },
-  });
+  })
   return (
     <>
       {/* Display the upload mutation which returns {upload: success}. */}
@@ -69,21 +71,21 @@ const Upload = () => {
         accept="image/png, image/jpeg"
       />
     </>
-  );
-};
+  )
+}
 
 // GALLERY
 
 const getPhotos = async () => {
   // fetches all photos from the Google Cloud Storage bucket
-  const res = await fetch("/api/photos");
+  const res = await fetch("/api/photos")
   if (!res.ok) {
-    console.error(res);
-    throw Error("Failed to fetch photos.");
+    console.error(res)
+    throw Error("Failed to fetch photos.")
   }
-  const photos = await res.json();
-  return photos;
-};
+  const photos = await res.json()
+  return photos
+}
 
 // parseImage mutation that calls the Google Cloud Document API from the Next.js server
 const parseImage = async (imageUrl) => {
@@ -93,39 +95,39 @@ const parseImage = async (imageUrl) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ imageUrl }),
-  });
+  })
   if (!res.ok) {
-    console.error(res);
-    throw Error("Failed to parse salary.");
+    console.error(res)
+    throw Error("Failed to parse salary.")
   }
-  const parsedSalary = await res.json();
-  return parsedSalary;
-};
+  const parsedSalary = await res.json()
+  return parsedSalary
+}
 
 const Gallery = () => {
   // data loader
-  const fetchPhotos = useQuery(["photos"], getPhotos);
+  const fetchPhotos = useQuery(["photos"], getPhotos)
 
   // pagination feature
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 5;
-  const handleNextPage = () => setPage((prevPage) => prevPage + 1);
-  const handlePreviousPage = () => setPage((prevPage) => prevPage - 1);
-  const indexOfLastItem = page * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const [page, setPage] = useState(1)
+  const itemsPerPage = 5
+  const handleNextPage = () => setPage((prevPage) => prevPage + 1)
+  const handlePreviousPage = () => setPage((prevPage) => prevPage - 1)
+  const indexOfLastItem = page * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentImages = Boolean(fetchPhotos?.data?.length)
     ? fetchPhotos.data.slice(indexOfFirstItem, indexOfLastItem)
-    : [];
+    : []
 
   // image selection feature
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null)
 
   // parse salary mutation
   const parseImageMutation = useMutation(["parseImage"], parseImage, {
     onSuccess: () => {
-      queryClient.invalidateQueries(["parsedImages"]);
+      queryClient.invalidateQueries(["parsedImages"])
     },
-  });
+  })
 
   return (
     <div className="bg-gray-200">
@@ -138,7 +140,7 @@ const Gallery = () => {
           {currentImages.map((image) => {
             const isSelected = selectedImage
               ? selectedImage.url === image.url
-              : false;
+              : false
             return (
               <div
                 key={image.url}
@@ -161,7 +163,7 @@ const Gallery = () => {
                   className={`w-full ${isSelected ? "relative z-10" : ""}`}
                 />
               </div>
-            );
+            )
           })}
         </div>
         <div className="flex justify-between">
@@ -182,5 +184,5 @@ const Gallery = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

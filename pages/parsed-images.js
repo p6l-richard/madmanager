@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "react-query";
+import React, { useState } from "react"
+import { useMutation, useQuery } from "@tanstack/react-query"
 
 const getParsedImages = async () => {
   // fetches all photos from the Google Cloud Storage bucket
-  const res = await fetch("/api/parsed-images");
+  const res = await fetch("/api/parsed-images")
   if (!res.ok) {
-    console.error(res);
-    throw Error("Failed to fetch photos.");
+    console.error(res)
+    throw Error("Failed to fetch photos.")
   }
-  const images = await res.json();
-  console.log(images);
-  return images;
-};
+  const images = await res.json()
+  console.log(images)
+  return images
+}
 
 // parseSalary mutation that parses the response from the Google Cloud Document API from the Next.js server
 const parseSalary = async (filename) => {
@@ -23,26 +23,26 @@ const parseSalary = async (filename) => {
         "Content-Type": "application/json",
       },
     }
-  );
+  )
   if (!res.ok) {
-    console.error(res);
-    throw Error("Failed to parse salary.");
+    console.error(res)
+    throw Error("Failed to parse salary.")
   }
-  const parsedSalary = await res.json();
-  return parsedSalary;
-};
+  const parsedSalary = await res.json()
+  return parsedSalary
+}
 
 export default function ParsedImages() {
-  const [parsedImages, setParsedImages] = useState(null);
-  const parsedImagesQuery = useQuery("parsedImages", getParsedImages);
+  const [parsedImages, setParsedImages] = useState(null)
+  const parsedImagesQuery = useQuery("parsedImages", getParsedImages)
   const parseSalaryMutation = useMutation("parseSalary", parseSalary, {
     // onSuccess, persist the data to react useState:
     onSuccess: (data) => {
-      setParsedImages(data);
+      setParsedImages(data)
     },
-  });
+  })
 
-  console.log(parsedImages);
+  console.log(parsedImages)
 
   return (
     <div className="p-4 bg-gray-100">
@@ -97,10 +97,8 @@ export default function ParsedImages() {
         </>
       )}
     </div>
-  );
+  )
 }
-
-import React from "react";
 
 const Table = ({ data }) => {
   return (
@@ -122,5 +120,5 @@ const Table = ({ data }) => {
         ))}
       </tbody>
     </table>
-  );
-};
+  )
+}

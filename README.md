@@ -14,15 +14,15 @@ Retrieve your existing project ID, bucket name, and service account email and pr
 
 1. Download the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) so you can use the `gcloud` CLI.
 1. Inside Google Cloud, create a new project `vision-api-ocr-371414`.
-2. Create a new [service account](https://console.cloud.google.com/iam-admin/serviceaccounts) with a role of `Storage Admin`.
-   -  Click "Create Key" and save the JSON file.
+1. Create a new [service account](https://console.cloud.google.com/iam-admin/serviceaccounts) with a role of `Storage Admin`.
+   - Click "Create Key" and save the JSON file.
    - Note: Copy the e-mail of the service account and under `IAM` > `Manage Roles` grant the role `Storage Admin` to the principal with the email of the service account.
    - It should look like this: [IAM permissions](https://share.cleanshot.com/lglDc48g)
-3. Create a new Cloud Storage bucket (you need to enable the API first)
-4. Run `pnpm i` to install all deps
-5.  Run `pnpm dev` to start the Next app at `localhost:3000`.
-6.  Choose a `.png` or `.jpg` file.
-7.  You should see your file successfully uploaded to the bucket.
+1. Create a new Cloud Storage bucket (you need to enable the API first)
+1. Run `pnpm i` to install all deps
+1. Run `pnpm dev` to start the Next app at `localhost:3000`.
+1. Choose a `.png` or `.jpg` file.
+1. You should see your file successfully uploaded to the bucket.
 
 ## Commands
 
