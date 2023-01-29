@@ -13,13 +13,13 @@ export default async function handler(req, res) {
   const bucket = storage.bucket(process.env.BUCKET_NAME)
 
   const [files] = await bucket.getFiles({
-    prefix: "SALARY-FORM-PARSE-RESPONSE",
+    prefix: process.env.GCS_OUTPUT_PREFIX,
   })
 
   const photos = files.flatMap((file) => {
     console.log("NAME: ", file.name)
     // if file is stores in output folder, ignore it
-    if (!file.name.includes("SALARY-FORM-PARSE-RESPONSE/")) return []
+    if (!file.name.includes(process.env.GCS_OUTPUT_PREFIX)) return []
     // else return the public url of the file
     return {
       url: decodeURIComponent(file.publicUrl()),

@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 }
 
 // UTIL
-const parseSalaryDataFromText = (responseText) => {
+export const parseSalaryDataFromText = (responseText) => {
   console.dir(responseText) // this looks something like this: 'Team Salaries\n2046 CAP\nRAINERS\nA.JUDGE\nC\nOVERALL 84\n2046 CAP PEN.\n
   // trim unnecessary data
   const [trimmed, _trailingGarbage] = responseText.split("\nVIEW PLAYER CARD") // the last value is followed by: '$0\nVIEW PLAYER CARD\nSORT\nO BACK\nSAMSUNG\n'

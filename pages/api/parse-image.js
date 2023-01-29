@@ -1,6 +1,8 @@
 import { DocumentProcessorServiceClient } from "@google-cloud/documentai"
 import { Storage } from "@google-cloud/storage"
 
+import { parseSalaryDataFromText } from "./parse-salary"
+
 // a handler to parse send an image to the google cloud document ai api and persist it in the google cloud storage, then return the parsed data
 export default async function handler(req, res) {
   // TODO: Remove the Storage client here, not necessary as I only need:
@@ -38,7 +40,8 @@ export default async function handler(req, res) {
   // note (richard): The uri field cannot currently be used for processing a document.
   // If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
   // @link: https://stackoverflow.com/a/74265697/5608461
-  const fileName = req.body.imageUrl.split(/\/|:|_/).pop()
+  console.log("IMAGE URL: ", req.body.imageUrl)
+  const fileName = req.body.imageUrl.split(/\//).pop()
   const file = bucket.file(fileName)
   const fileMetadata = (await file.getMetadata())[0]
   console.log("FILE NAME: ", fileName)
@@ -89,11 +92,12 @@ export default async function handler(req, res) {
         "-0.json" // '-0' is added automatically?
       )}`
     )
+    const fileDownload = await file.download()
+    const json = JSON.parse(fileDownload[0].toString("utf8"))
+    const salaryData = parseSalaryDataFromText(json.text)
 
     // now return the public url of the text response
-    return res.status(200).json({
-      url: file.publicUrl(),
-    })
+    return res.status(200).json(salaryData)
   } catch (error) {
     console.log("ERROR FETCHING FROM GOOOOOGLE")
     console.dir(error, { depth: 5 })

@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   const photos = files.flatMap((file) => {
     // if file is stores in output folder, ignore it
-    if (file.name.includes("SALARY-FORM-PARSE-RESPONSE/")) return []
+    if (file.name.includes(process.env.GCS_OUTPUT_PREFIX)) return []
     // else return the public url of the file
     return { url: file.publicUrl() }
   })
