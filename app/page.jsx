@@ -4,6 +4,8 @@ import { useState } from "react"
 import Link from "next/link"
 import { useMutation, useQuery } from "@tanstack/react-query"
 
+import { TypographyP } from "../components/typography"
+
 export default function Homepage() {
   return (
     <>
@@ -62,9 +64,9 @@ const Upload = () => {
   return (
     <>
       {/* Display the upload mutation which returns {upload: success}. */}
-      <p>Upload a .png or .jpg image (max 1MB).</p>
-      <p>status: {JSON.stringify(upload.status)}</p>
-      <p>data: {JSON.stringify(upload.data)}</p>
+      <TypographyP>Upload a .png or .jpg image (max 1MB).</TypographyP>
+      <TypographyP>status: {JSON.stringify(upload.status)}</TypographyP>
+      <TypographyP>data: {JSON.stringify(upload.data)}</TypographyP>
       <input
         onChange={upload.mutate}
         type="file"
@@ -133,9 +135,9 @@ const Gallery = () => {
     <div className="bg-gray-200">
       <div className="container p-4 mx-auto">
         <h1 className="text-2xl font-medium">Image Gallery</h1>
-        <p className="text-gray-500">
+        <TypographyP className="text-gray-500">
           {fetchPhotos?.data?.length} images uploaded.
-        </p>
+        </TypographyP>
         <div className="grid grid-cols-5 gap-4">
           {currentImages.map((image) => {
             const isSelected = selectedImage

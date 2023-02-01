@@ -1,7 +1,20 @@
+import { NextApiRequest, NextApiResponse } from "next"
 import { Storage } from "@google-cloud/storage"
 
-export default async function handler(req, res) {
-  console.log("creating a presigned url for GCP")
+import { prisma } from "../../lib/server/db"
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // create the image in the database to generate a unique id
+  const imageDb = await prisma.image.create({
+    data: {
+      filename: req.query.filename as string,
+      bucketName: process.env.BUCKET_NAME!,
+    },
+  })
+
   const storage = new Storage({
     projectId: process.env.PROJECT_ID,
     credentials: {
@@ -10,7 +23,7 @@ export default async function handler(req, res) {
     },
   })
 
-  const bucket = storage.bucket(process.env.BUCKET_NAME)
+  const bucket = storage.bucket(imageDb.bucketName)
 
   console.log("--- setting cors ---")
   console.log("origin: ", process.env.VERCEL_URL)
@@ -27,21 +40,28 @@ export default async function handler(req, res) {
     },
   ])
   console.log("--- cors set ---")
-  const [metadata] = await bucket.getMetadata()
-  console.log("cors data:")
-  console.log(JSON.stringify(metadata, null, 2))
-  // is this the file name?
-  const file = bucket.file(req.query.file)
-  const options = {
+
+  // create the file in GCS and get a pre-signed URL for the upload
+  const file = bucket.file(imageDb.id)
+
+  // update the image in our db with the GCS URI and the public URL
+  await prisma.image.update({
+    where: { id: imageDb.id },
+    data: {
+      gcsUri: `gs://${imageDb.bucketName}/${imageDb.id}`,
+      publicUrl: file.publicUrl(),
+    },
+  })
+
+  console.log("signing the URL...")
+  const [response] = await file.generateSignedPostPolicyV4({
     expires: Date.now() + 1 * 60 * 1000, //  1 minute,
     fields: { "x-goog-meta-test": "data" },
     conditions: [
       ["content-length-range", 0, 1024 * 1024], // 1MB
       // ["starts-with", "$Content-Type", "image/"],
     ],
-  }
-  console.log("signing...")
-  const [response] = await file.generateSignedPostPolicyV4(options)
-  // console.dir(response, { depth: 5 });
+  })
+
   res.status(200).json(response)
 }

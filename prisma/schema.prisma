@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Image {
+    id              String           @id @default(cuid())
+    filename        String
+    bucketName      String
+    publicUrl       String?
+    gcsUri          String?
+    createdAt       DateTime         @default(now())
+    updatedAt       DateTime         @updatedAt
+    documentProcess DocumentProcess?
+    salary          Salary?
+}
+
+model DocumentProcess {
+    id                    String @id @default(cuid())
+    // every process is linked to an image (1:1)
+    imageId               String @unique
+    image                 Image  @relation(fields: [imageId], references: [id])
+    // the request object's data
+    processorResourceName String
+    outputGcsUri          String
+    // the process operation's data
+    operationName         String
+
+    createdAt DateTime               @default(now())
+    updatedAt DateTime               @updatedAt
+    // every process has a single response linked (1:1)
+    result    DocumentProcessResult?
+}
+
+model DocumentProcessResult {
+    id                String          @id @default(cuid())
+    // every result is linked to a single process (1:1)
+    documentProcessId String          @unique
+    documentProcess   DocumentProcess @relation(fields: [documentProcessId], references: [id])
+
+    filename   String
+    bucketName String
+    publicUrl  String
+
+    fileContent  Json
+    textResponse Json
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+enum SalaryStatus {
+    NEW
+    CONFIRMED
+}
+
+model Salary {
+    id String @id @default(cuid())
+
+    data   Json
+    // The salary data is only confirmed after the user copies to clipboard
+    status SalaryStatus @default(NEW)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // salary data has a 1:1 relationship with Image
+    imageId String @unique
+    image   Image  @relation(fields: [imageId], references: [id])
+}
