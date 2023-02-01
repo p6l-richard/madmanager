@@ -30,7 +30,6 @@ specifiers:
   tailwindcss-radix: ^2.7.0
   typescript: 4.9.5
   zod: ^3.20.2
-  zustand: ^4.3.2
 
 dependencies:
   '@google-cloud/documentai': 6.2.0
@@ -57,7 +56,6 @@ dependencies:
   tailwindcss-animate: 1.0.5_tailwindcss@3.2.4
   tailwindcss-radix: 2.7.0
   zod: 3.20.2
-  zustand: 4.3.2_react@18.2.0
 
 devDependencies:
   '@ianvs/prettier-plugin-sort-imports': 3.7.1_prettier@2.8.3
@@ -3045,20 +3043,4 @@ packages:
 
   /zod/3.20.2:
     resolution: {integrity: sha512-1MzNQdAvO+54H+EaK5YpyEy0T+Ejo/7YLHS93G3RnYWh5gaotGHwGeN/ZO687qEDU2y4CdStQYXVHIgrUl5UVQ==}
-    dev: false
-
-  /zustand/4.3.2_react@18.2.0:
-    resolution: {integrity: sha512-rd4haDmlwMTVWVqwvgy00ny8rtti/klRoZjFbL/MAcDnmD5qSw/RZc+Vddstdv90M5Lv6RPgWvm1Hivyn0QgJw==}
-    engines: {node: '>=12.7.0'}
-    peerDependencies:
-      immer: '>=9.0'
-      react: '>=16.8'
-    peerDependenciesMeta:
-      immer:
-        optional: true
-      react:
-        optional: true
-    dependencies:
-      react: 18.2.0
-      use-sync-external-store: 1.2.0_react@18.2.0
     dev: false
