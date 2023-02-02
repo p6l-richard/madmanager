@@ -90,7 +90,7 @@ export const Table = ({
                         <div className="space-y-1">
                           <div className="grid w-full max-w-sm items-center gap-1.5">
                             <Label htmlFor="update-cell-input">
-                              The value for F
+                              The value for{" "}
                               <TypographyInlineCode>
                                 {salaryData[0][colIdx]}
                               </TypographyInlineCode>{" "}
