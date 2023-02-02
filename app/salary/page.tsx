@@ -1,12 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { ReactNode, useState } from "react"
 import Image from "next/image"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ClipboardCopy, Loader2 } from "lucide-react"
+import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react"
 
 import { Button } from "../../components/button"
-import { TypographyH3, TypographyP } from "../../components/typography"
+import { CollapsibleTableWrapper } from "../../components/collapsible-table-wrapper"
+import { Separator } from "../../components/separator"
+import { ToastDescription, ToastTitle, toast } from "../../components/toast"
+import {
+  TypographyH3,
+  TypographyH4,
+  TypographyP,
+} from "../../components/typography"
+import { cn } from "../../lib/utils"
+import {
+  TableBody,
+  TableData,
+  TableHeader,
+  TableHeaderCell,
+  TableRoot,
+  TableRow,
+} from "../table"
 import { Table, fetchSalary } from "./table"
 import { UploadImage } from "./upload"
 
@@ -27,36 +43,6 @@ export type SalaryData = [
   string
 ][]
 
-const IMAGE_URL = `https://storage.googleapis.com/madden-regression-bucket/salary-pic-number-zwo.jpeg`
-const steps = [
-  {
-    id: 1,
-  },
-  {
-    id: 2,
-    title: "Salary extraction",
-    description: "Let AI extract the imageId for you.",
-    LeftColumn: (filename: string) => (
-      <Image
-        alt="screenshot uploaded by user"
-        className="object-cover rounded-t-md"
-        src={IMAGE_URL}
-        width={400}
-        height={400}
-      />
-    ),
-  },
-  {
-    id: 3,
-    title: "Parse salary data",
-    description: "Parse the salary data in a spreadsheet format.",
-  },
-  {
-    id: 4,
-    title: "Review",
-    description: "Check if the data looks good.",
-  },
-]
 const processImage = async ({ imageId }: { imageId: string }) => {
   if (process.env.NODE_ENV === "development") {
     return new Promise((resolve) => {
@@ -157,7 +143,7 @@ export default function SalaryPage() {
         {Boolean(imageId) ? (
           <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
             <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
-              <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-dashed rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+              <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
                 <Image
                   alt="screenshot uploaded by the user"
                   className="object-contain rounded-t-md h-96 w-96 rounded-2xl "
@@ -182,7 +168,7 @@ export default function SalaryPage() {
         </div>
         <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
           <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
-            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
               <RightColumn
                 imageId={imageId}
                 onProcess={() => setIsProcessed(true)}
@@ -206,6 +192,7 @@ export default function SalaryPage() {
               if (!salaryData) {
                 // early return if we don't have data
                 // TODO: send toast with error message
+                toast({ content: "No data to copy" })
                 return
               }
               navigator.clipboard.writeText(
@@ -215,17 +202,57 @@ export default function SalaryPage() {
               )
               confirmSalaryResult.mutateAsync({ imageId })
               // TODO: send toast message to confirm copy to clipboard
+              toast({
+                content: (
+                  <>
+                    <ToastTitle asChild>
+                      <TypographyH4 className="inline-flex items-center mt-4">
+                        <ClipboardCheck className="w-5 h-5 mr-2" /> Copied to
+                        clipboard
+                      </TypographyH4>
+                    </ToastTitle>
+                    <ToastDescription className="mt-2 space-y-2">
+                      <TypographyP>
+                        We've copied the below data to your clipboard. You can
+                        simply paste it into your spreadsheet.
+                      </TypographyP>
+                      <Separator />
+                      <CollapsibleTableWrapper expandButtonTitle="View Preview">
+                        <PreviewTable data={salaryData} />
+                      </CollapsibleTableWrapper>
+                    </ToastDescription>
+                  </>
+                ),
+              })
             }}
           >
-            Copy to clipboard
-            <ClipboardCopy />
+            <ClipboardCopy className="w-6 h-6 pr-2" /> Copy to clipboard
           </Button>
         </div>
       )}
     </div>
   )
 }
-
+const PreviewTable = ({ data }: { data: SalaryData }) => {
+  return (
+    <TableRoot>
+      <TableHeader>
+        {data[0].map((cell, i) => (
+          <TableHeaderCell key={i}>{cell}</TableHeaderCell>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {data.slice(1).map((row, i) => (
+          <TableRow key={i}>
+            {row.map((cell, j) => (
+              <TableData key={j}>{cell}</TableData>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </TableRoot>
+  )
+}
 export const tableData = [
   [
     "NAME",

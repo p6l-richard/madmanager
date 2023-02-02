@@ -2,7 +2,14 @@
 
 import { useState } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+
+import {
+  Toast,
+  ToastClose,
+  ToastProvider,
+  ToastViewport,
+  useToaster,
+} from "../components/toast"
 
 export default function Providers({
   children,
@@ -10,11 +17,20 @@ export default function Providers({
   children?: React.ReactNode
 }) {
   const [queryClient] = useState(() => new QueryClient())
-
+  const { toasts } = useToaster()
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      <ToastProvider>
+        {toasts.map(({ id, children, ...props }) => (
+          <Toast key={id} {...props}>
+            {children}
+            <ToastClose />
+          </Toast>
+        ))}
+
+        {children}
+        <ToastViewport position="bottom-right" />
+      </ToastProvider>
     </QueryClientProvider>
   )
 }
