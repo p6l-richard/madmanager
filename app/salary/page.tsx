@@ -3,14 +3,10 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { Clipboard, Loader2 } from "lucide-react"
+import { ClipboardCopy, Loader2 } from "lucide-react"
 
 import { Button } from "../../components/button"
-import {
-  TypographyH3,
-  TypographyLarge,
-  TypographyP,
-} from "../../components/typography"
+import { TypographyH3, TypographyP } from "../../components/typography"
 import { Table, fetchSalary } from "./table"
 import { UploadImage } from "./upload"
 
@@ -78,15 +74,23 @@ const processImage = async ({ imageId }: { imageId: string }) => {
   const parsedSalary = (await res.json()) as SalaryData
   return parsedSalary
 }
-const RightColumn = ({ imageId }: { imageId: string | undefined }) => {
+const RightColumn = ({
+  imageId,
+  onProcess,
+}: {
+  imageId: string | undefined
+  onProcess: () => void
+}) => {
   const queryClient = useQueryClient()
   const imageData = useMutation(
+    ["process-image", imageId],
     ({ imageId }: { imageId: string }) => {
       return processImage({ imageId })
     },
     {
       onSuccess: (data) => {
         queryClient.setQueryData(["salary", imageId], data)
+        onProcess()
       },
     }
   )
@@ -98,14 +102,6 @@ const RightColumn = ({ imageId }: { imageId: string | undefined }) => {
     {
       // we have to wait for the other two mutations to have happened before we can run this query
       enabled: Boolean(imageId) && imageData.isSuccess,
-    }
-  )
-  const confirmSalaryResult = useMutation(
-    ({ imageId }: { imageId: string }) => {
-      return fetch(`/api/confirm-salary`, {
-        method: "POST",
-        body: JSON.stringify({ imageId }),
-      })
     }
   )
 
@@ -136,6 +132,17 @@ const RightColumn = ({ imageId }: { imageId: string | undefined }) => {
 export default function SalaryPage() {
   // the imageId from our store
   const [imageId, setImageId] = useState<string>()
+  const [isProcessed, setIsProcessed] = useState(false)
+  const queryClient = useQueryClient()
+
+  const confirmSalaryResult = useMutation(
+    ({ imageId }: { imageId: string }) => {
+      return fetch(`/api/confirm-salary`, {
+        method: "POST",
+        body: JSON.stringify({ imageId }),
+      })
+    }
+  )
 
   return (
     <div className="md:grid md:grid-cols-2 md:gap-6">
@@ -175,12 +182,46 @@ export default function SalaryPage() {
         </div>
         <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
           <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
-            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-dashed rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
-              <RightColumn imageId={imageId} />
+            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+              <RightColumn
+                imageId={imageId}
+                onProcess={() => setIsProcessed(true)}
+              />
             </div>
           </div>
         </div>
       </div>
+      {/* footer w/ cta? */}
+      {Boolean(isProcessed) && !!imageId && (
+        <div className="flex flex-col items-center justify-center col-span-2">
+          <TypographyH3 className="mt-2">Looks good?</TypographyH3>
+          <Button
+            className="mt-2"
+            onClick={() => {
+              // copy salaryData to the clipboard
+              const salaryData = queryClient.getQueryData<SalaryData>([
+                "salary",
+                imageId,
+              ])
+              if (!salaryData) {
+                // early return if we don't have data
+                // TODO: send toast with error message
+                return
+              }
+              navigator.clipboard.writeText(
+                salaryData // convert into tab separated values for seamless spreadsheet insertion
+                  .map((row) => row.join("\t"))
+                  .join("\n")
+              )
+              confirmSalaryResult.mutateAsync({ imageId })
+              // TODO: send toast message to confirm copy to clipboard
+            }}
+          >
+            Copy to clipboard
+            <ClipboardCopy />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
