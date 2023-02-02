@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react"
@@ -14,6 +14,7 @@ import {
   TypographyH4,
   TypographyP,
 } from "../../components/typography"
+import { tableData } from "../../lib/constants"
 import { cn } from "../../lib/utils"
 import {
   TableBody,
@@ -253,110 +254,3 @@ const PreviewTable = ({ data }: { data: SalaryData }) => {
     </TableRoot>
   )
 }
-export const tableData = [
-  [
-    "NAME",
-    "POS",
-    "AGE",
-    "OVR",
-    "LEN",
-    "REM",
-    "TOTAL",
-    "BONUS",
-    "2046",
-    "2047",
-    "2048",
-    "2049",
-    "2050",
-  ],
-  [
-    "C.Curry",
-    "SS",
-    "25",
-    "61",
-    "2",
-    "2",
-    "$500K",
-    "$0",
-    "$240K",
-    "$260K",
-    "$0",
-    "$0",
-    "$0",
-  ],
-  [
-    "J.Jones",
-    "CB",
-    "25",
-    "60",
-    "2",
-    "2",
-    "$500K",
-    "$0",
-    "$240K",
-    "$260K",
-    "$0",
-    "$0",
-    "$0",
-  ],
-  [
-    "B.Burks",
-    "LT",
-    "26",
-    "60",
-    "2",
-    "1",
-    "$570K",
-    "$0",
-    "$300K",
-    "$0",
-    "$0",
-    "$0",
-    "$0",
-  ],
-  [
-    "J.Pearman",
-    "LG",
-    "25",
-    "59",
-    "2",
-    "2",
-    "$660K",
-    "$0",
-    "$320K",
-    "$340K",
-    "$0",
-    "$0",
-    "$0",
-  ],
-  [
-    "K.Hutchins",
-    "HB",
-    "24",
-    "59",
-    "2",
-    "1",
-    "$520K",
-    "$0",
-    "$270K",
-    "$0",
-    "$0",
-    "$0",
-    "$0",
-  ],
-  [
-    "J.Kane",
-    "TE",
-    "24",
-    "58",
-    "2",
-    "2",
-    "$910K",
-    "$0",
-    "$440K",
-    "$470K",
-    "$0",
-    "$0",
-    "$0",
-  ],
-] as SalaryData
