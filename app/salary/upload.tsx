@@ -7,7 +7,6 @@ import { Button } from "../../components/button"
 import { Input } from "../../components/input"
 import { TypographyP } from "../../components/typography"
 import { cn } from "../../lib/utils"
-import { useImageActions } from "./store"
 
 export const UploadImage = ({
   onUpload: setImageId,
