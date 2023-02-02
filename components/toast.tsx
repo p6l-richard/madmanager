@@ -76,6 +76,8 @@ const Toast: React.FC<ToastProps> = React.forwardRef<HTMLLIElement, ToastProps>(
   )
 )
 
+Toast.displayName = "Toast"
+
 const ToastProvider: React.FC<ToastPrimitives.ToastProviderProps> = (props) => (
   <ToastPrimitives.Provider swipeDirection="right" duration={3000} {...props} />
 )
