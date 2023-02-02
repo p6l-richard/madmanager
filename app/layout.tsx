@@ -1,7 +1,10 @@
 import { cn } from "../lib/utils"
 import "../styles/globals.css"
+import Head from "next/head"
 import { Inter as FontSans } from "@next/font/google"
 
+import { Footer } from "../components/site-footer"
+import { Header } from "../components/site-header"
 import Providers from "./providers"
 
 const fontSans = FontSans({
@@ -25,7 +28,13 @@ export default function RootLayout({
             fontSans.variable
           )}
         >
-          <Providers>{children}</Providers>
+          <Providers>
+            <div className="flex flex-col min-h-screen">
+              <Header />
+              <div className="container flex-1">{children}</div>
+              <Footer />
+            </div>
+          </Providers>
         </body>
       </html>
       {/* <VercelAnalytics /> */}

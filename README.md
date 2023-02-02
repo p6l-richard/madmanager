@@ -8,7 +8,7 @@ This is an example of a Next.js application allowing you to upload photos to a G
 
 Retrieve your existing project ID, bucket name, and service account email and private key. Provide those values after clicking "Deploy" to automatically set the environment variables.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https%3A%2F%2Fgithub.com%2Fleerob%2Fnextjs-gcp-storage&env=PROJECT_ID,CLIENT_EMAIL,PRIVATE_KEY,BUCKET_NAME&envDescription=GCP%20bucket%20information%20and%20service%20account.)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https%3A%2F%2Fgithub.com%2Fleerob%2Fnextjs-gcp-storage&env=GOOGLE_CLOUD_PROJECT_ID,CLIENT_EMAIL,PRIVATE_KEY,BUCKET_NAME&envDescription=GCP%20bucket%20information%20and%20service%20account.)
 
 **Option 2: Create a new bucket.**
 

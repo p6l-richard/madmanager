@@ -2,6 +2,11 @@ import { NextApiRequest, NextApiResponse } from "next"
 import { DocumentProcessorServiceClient } from "@google-cloud/documentai"
 import { Storage } from "@google-cloud/storage"
 
+import {
+  GOOGLE_CLOUD_STORAGE_BUCKET_NAME,
+  MIME_TYPE,
+} from "../../lib/constants"
+import { env } from "../../lib/env/server.mjs"
 import { prisma } from "../../lib/server/db"
 import { convertCurrencyString } from "../../lib/server/parsers"
 
@@ -10,22 +15,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // TODO: Remove the Storage client here, not necessary as I only need:
-  // - file name,
-  // - contentType
-  // both of which I can possible get in a different way?
-  const storage = new Storage({
-    projectId: process.env.PROJECT_ID,
-    credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      private_key: process.env.PRIVATE_KEY,
-    },
-  })
-
-  console.log("process-image.ts: req.body", req.body)
   const { imageId } = JSON.parse(req.body)
-  console.log("process-image.ts: req.body.imageId", req.body.imageId)
-  console.log("process-image.ts: req.body.imageId", imageId)
 
   const image = await prisma.image.findUnique({
     where: { id: imageId },
@@ -39,40 +29,29 @@ export default async function handler(
   if (image.documentProcess?.result) {
     return res.status(200).json(image.documentProcess.result)
   }
-  const bucket = storage.bucket(image.bucketName)
-
-  // TODO: Store them as env vars
-  const projectId = "852342095963"
-  const location = "us"
-  const processorId = "6e78d7e6be7beb2a"
-
-  // Instantiate the client
-  const client = new DocumentProcessorServiceClient({
-    projectId: process.env.PROJECT_ID,
+  // Instantiate the documentAiClient
+  const documentAiClient = new DocumentProcessorServiceClient({
+    projectId: env.GOOGLE_CLOUD_PROJECT_ID,
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      private_key: process.env.PRIVATE_KEY,
+      client_email: env.GOOGLE_CLOUD_CLIENT_EMAIL,
+      private_key: env.GOOGLE_CLOUD_PRIVATE_KEY,
     },
   })
-
-  // The full resource name of the processor
-  const name = `projects/${projectId}/locations/${location}/processors/${processorId}`
 
   // Configure the batch process request.
   // note (richard): The uri field cannot currently be used for processing a document.
   // If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
   // @link: https://stackoverflow.com/a/74265697/5608461
-  const file = bucket.file(image.id)
-  const fileMetadata = (await file.getMetadata())[0]
-  const gcsOutputUri = `gs://${process.env.BUCKET_NAME}/${process.env.GCS_OUTPUT_PREFIX}`
+  const gcsOutputUri = `gs://${GOOGLE_CLOUD_STORAGE_BUCKET_NAME}/${env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX}`
+  const processorResourceName = `projects/${env.GOOGLE_CLOUD_PROJECT_NUMBER}/locations/${env.GOOGLE_DOCUMENT_AI_LOCATION}/processors/${env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID}`
   const request = {
-    name,
+    name: processorResourceName,
     inputDocuments: {
       gcsDocuments: {
         documents: [
           {
-            gcsUri: `gs://${fileMetadata.bucket}/${fileMetadata.name}`, // get the google cloud storage bucket uri from the request body
-            mimeType: fileMetadata.contentType, // get the metadata from the google cloud storage bucket
+            gcsUri: `gs://${image.bucketName}/${image.id}`, // get the google cloud storage bucket uri from the request body
+            mimeType: MIME_TYPE, // this is a guess for now
           },
         ],
       },
@@ -84,8 +63,6 @@ export default async function handler(
     },
   }
 
-  const processor = await client.getProcessor({ name })
-
   // Process the document
   try {
     console.log("Batch processing...")
@@ -93,7 +70,7 @@ export default async function handler(
     // You can wait for now, or get results later.
     // Note: first request to the service takes longer than subsequent
     // requests.
-    const [operation] = await client.batchProcessDocuments(request)
+    const [operation] = await documentAiClient.batchProcessDocuments(request)
     if (!operation || !operation.name) {
       return res.status(500).json({ error: "Operation not found" })
     }
@@ -103,19 +80,29 @@ export default async function handler(
     // return the operation name
     console.log("Batch processing complete for operation:", operation.name)
 
+    // Get the results of the batch process using the operation name to parse the salaryData
+    const bucket = new Storage({
+      projectId: env.GOOGLE_CLOUD_PROJECT_ID,
+      credentials: {
+        client_email: env.GOOGLE_CLOUD_CLIENT_EMAIL,
+        private_key: env.GOOGLE_CLOUD_PRIVATE_KEY,
+      },
+    }).bucket(image.bucketName)
+
     const file = bucket.file(
       // subfolder(s) + /0/ + filename
-      `${process.env.GCS_OUTPUT_PREFIX! + operation.name.split("/").pop()}/0/${
-        image.id
-      }-0.json` // -0.json is added automatically?
+      `${
+        env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX + operation.name.split("/").pop()
+      }/0/${image.id}-0.json` // -0.json is added automatically?
     )
     const fileDownload = await file.download()
     const json = JSON.parse(fileDownload[0].toString("utf8"))
     const salaryData = parseSalaryDataFromText(json.text).map((row) =>
       row.map(convertCurrencyString)
     )
-    // now persist everyting to the database
+    // Now that we have obtained our parsed result, persist everyting to the database
     Promise.all([
+      // store the document ai result
       await prisma.documentProcess.create({
         data: {
           result: {
@@ -128,7 +115,7 @@ export default async function handler(
             },
           },
           operationName: operation.name,
-          processorResourceName: name,
+          processorResourceName,
           outputGcsUri: gcsOutputUri,
           image: {
             connect: {
@@ -137,6 +124,7 @@ export default async function handler(
           },
         },
       }),
+      // store our parsed data (from the result)
       await prisma.salary.create({
         data: {
           data: salaryData,
@@ -149,7 +137,7 @@ export default async function handler(
       }),
     ])
 
-    // now return the public url of the text response
+    // now return the data
     return res.status(200).json(salaryData)
   } catch (error) {
     console.log("ERROR FETCHING FROM GOOOOOGLE")

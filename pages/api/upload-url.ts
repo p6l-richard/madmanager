@@ -1,38 +1,48 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { Storage } from "@google-cloud/storage"
+import { z } from "zod"
 
+import { GOOGLE_CLOUD_STORAGE_BUCKET_NAME } from "../../lib/constants"
+import { env } from "../../lib/env/server.mjs"
 import { prisma } from "../../lib/server/db"
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  const inputValidation = z
+    .object({
+      filename: z.string(),
+    })
+    .safeParse(req.query)
+  if (!inputValidation.success) {
+    return res.status(400).json({ error: "Filename is required" })
+  }
   // create the image in the database to generate a unique id
   const imageDb = await prisma.image.create({
     data: {
-      filename: req.query.filename as string,
-      bucketName: process.env.BUCKET_NAME!,
+      filename: inputValidation.data.filename,
+      bucketName: GOOGLE_CLOUD_STORAGE_BUCKET_NAME,
     },
   })
 
   const storage = new Storage({
-    projectId: process.env.PROJECT_ID,
+    projectId: env.GOOGLE_CLOUD_PROJECT_ID,
     credentials: {
-      client_email: process.env.CLIENT_EMAIL,
-      private_key: process.env.PRIVATE_KEY,
+      client_email: env.GOOGLE_CLOUD_CLIENT_EMAIL,
+      private_key: env.GOOGLE_CLOUD_PRIVATE_KEY,
     },
   })
 
   const bucket = storage.bucket(imageDb.bucketName)
 
   console.log("--- setting cors ---")
-  console.log("origin: ", process.env.VERCEL_URL)
   await bucket.setCorsConfiguration([
     {
       maxAgeSeconds: 60, //  1 minute
       method: ["POST"],
       origin: [
-        process.env.NODE_ENV === "development"
+        env.NODE_ENV === "development"
           ? "http://localhost:3000"
           : "https://madmanager.vercel.app", // VERCEL_URL contains the hash as well
       ],
@@ -41,7 +51,7 @@ export default async function handler(
   ])
   console.log("--- cors set ---")
 
-  // create the file in GCS and get a pre-signed URL for the upload
+  // create the file in GCS
   const file = bucket.file(imageDb.id)
 
   // update the image in our db with the GCS URI and the public URL
@@ -53,7 +63,7 @@ export default async function handler(
     },
   })
 
-  console.log("signing the URL...")
+  console.log("create the signed URL for our upload")
   const [response] = await file.generateSignedPostPolicyV4({
     expires: Date.now() + 1 * 60 * 1000, //  1 minute,
     fields: { "x-goog-meta-test": "data" },
