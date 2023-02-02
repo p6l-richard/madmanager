@@ -11,7 +11,7 @@ import { Input } from "../../components/input"
 import { Label } from "../../components/label"
 import { TypographyInlineCode, TypographyP } from "../../components/typography"
 import { cn } from "../../lib/utils"
-import { SalaryData, tableData } from "./page"
+import { SalaryData } from "./page"
 
 export const fetchSalary = async ({ imageId }: { imageId: Image["id"] }) => {
   const res = await fetch("/api/salary?imageId=" + imageId)
