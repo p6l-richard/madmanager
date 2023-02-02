@@ -183,6 +183,7 @@ export const parseSalaryDataFromText = (responseText: string) => {
   // ]
   // Let's obtain the bodyRows in a proper tuple [][] with as many columns as the headerRow
 
+  // @ts-expect-error this would need to be types as a tuple but would need to fill the remaining array with $0's
   const bodyRows = []
   // the below code splits the array into rows, and then cleans up the data in each row
   // note: a player's name denominates a new row
@@ -202,6 +203,7 @@ export const parseSalaryDataFromText = (responseText: string) => {
 
     // now, clean up the row by running the row values through a regex for every column
     console.log("This row will be cleaned up now:", row)
+    // @ts-expect-error this would need to be types as a tuple but would need to fill the remaining array with $0's
     const cleanedRow = []
     row.forEach((rowValue) => {
       if (cleanedRow.length === headerRow.length) {
@@ -220,10 +222,13 @@ export const parseSalaryDataFromText = (responseText: string) => {
     })
 
     // we now have the cleanedRow and push that to the bodyRows
+    // @ts-expect-error this would need to be types as a tuple but would need to fill the remaining array with $0's
     console.log("cleanedRow: ", cleanedRow)
+    // @ts-expect-error this would need to be types as a tuple but would need to fill the remaining array with $0's
     bodyRows.push(cleanedRow)
   })
   // return the data table
+  // @ts-expect-error this would need to be types as a tuple but would need to fill the remaining array with $0's
   return [headerRow, ...bodyRows]
 }
 
