@@ -20,8 +20,8 @@ export function convertCurrencyString(str: string) {
   console.log("str: ", str, match)
   if (!match) return str
 
-  let [, amount, multiplier] = match
-  amount = Number(amount)
+  const [, amountAsString, multiplier] = match
+  let amount = Number(amountAsString)
 
   // Multiply the amount by 1000 or 1000000 if there is a "k" or "M" multiplier
   if (multiplier === "k" || multiplier === "K") amount *= 1000
