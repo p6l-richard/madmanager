@@ -5,4 +5,4 @@ node_modules
 .env
 .env.local
 # Next.js generates its own .tsbuildinfo at .next/cache. So, I guess you don't commit tsconfig.tsbuildinfo to version control.
-.tsconfig.tsbuildinfo
+tsconfig.tsbuildinfo
