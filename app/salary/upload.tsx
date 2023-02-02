@@ -77,7 +77,7 @@ export const UploadImage = ({
   )
   return (
     <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
-      <div className="flex flex-col h-full px-4 py-5 space-y-6 bg-white sm:p-6">
+      <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
         {/* dropzone */}
         <div
           {...getRootProps()}

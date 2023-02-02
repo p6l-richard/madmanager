@@ -23,7 +23,6 @@ export default function Head() {
         sizes="16x16"
         href="/favicon-16x16.png"
       />
-      <link rel="manifest" href="/site.webmanifest" />
       <meta content="width=device-width, initial-scale=1" name="viewport" />
       <meta property="og:type" content="website" />
       <meta property="og:title" content={siteConfig.name} />

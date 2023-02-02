@@ -11,7 +11,6 @@ import {
   TypographyLarge,
   TypographyP,
 } from "../../components/typography"
-import { useData, useDataActions, useImage } from "./store"
 import { Table, fetchSalary } from "./table"
 import { UploadImage } from "./upload"
 
@@ -42,15 +41,13 @@ const steps = [
     title: "Salary extraction",
     description: "Let AI extract the imageId for you.",
     LeftColumn: (filename: string) => (
-      <div className="relative w-full h-full inset-4">
-        <Image
-          alt="screenshot uploaded by user"
-          className="object-contain rounded-t-md"
-          src={IMAGE_URL}
-          sizes="100vw"
-          fill
-        />
-      </div>
+      <Image
+        alt="screenshot uploaded by user"
+        className="object-cover rounded-t-md"
+        src={IMAGE_URL}
+        width={400}
+        height={400}
+      />
     ),
   },
   {
@@ -166,7 +163,7 @@ export default function SalaryPage() {
   const [imageId, setImageId] = useState<string>()
 
   return (
-    <div className="h-screen md:grid md:grid-cols-2 md:gap-6">
+    <div className="md:grid md:grid-cols-2 md:gap-6">
       {/* left column */}
       <div className="flex flex-col">
         <div className="px-4 py-3 text-center xsm:px-6">
@@ -176,14 +173,18 @@ export default function SalaryPage() {
           </TypographyP>
         </div>
         {Boolean(imageId) ? (
-          <div className="relative w-full h-full">
-            <Image
-              alt="screenshot uploaded by the user"
-              className="object-contain rounded-t-md"
-              src={`https://storage.googleapis.com/madden-regression-bucket/${imageId}`}
-              sizes="100vw"
-              fill
-            />
+          <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
+            <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
+              <div className="relative flex flex-col items-center justify-center flex-1 max-h-full px-6 pt-5 pb-6 mt-1 border-2 border-dashed rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+                <Image
+                  alt="screenshot uploaded by the user"
+                  className="object-contain rounded-t-md h-96 w-96 rounded-2xl "
+                  src={`https://storage.googleapis.com/madden-regression-bucket/${imageId}`}
+                  width={500}
+                  height={500}
+                />
+              </div>
+            </div>
           </div>
         ) : (
           <UploadImage onUpload={setImageId} />
