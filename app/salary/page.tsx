@@ -15,7 +15,7 @@ import {
   TypographyP,
 } from "../../components/typography"
 import { tableData } from "../../lib/constants"
-import { cn } from "../../lib/utils"
+import { cn, imageLoader } from "../../lib/utils"
 import {
   TableBody,
   TableData,
@@ -141,16 +141,18 @@ export default function SalaryPage() {
             Take a screenshot of the salary display and upload it here.
           </TypographyP>
         </div>
-        {Boolean(imageId) ? (
+        {!!imageId ? (
           <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
             <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
               <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
                 <Image
                   alt="screenshot uploaded by the user"
-                  className="object-contain rounded-t-md h-96 w-96 rounded-2xl "
-                  src={`https://storage.googleapis.com/madden-regression-bucket/${imageId}`}
+                  className="object-contain rounded-t-md h-96 w-96 rounded-2xl"
+                  loader={imageLoader}
+                  src={imageId}
                   width={500}
                   height={500}
+                  quality={100}
                 />
               </div>
             </div>

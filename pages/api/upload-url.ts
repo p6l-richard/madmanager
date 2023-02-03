@@ -44,7 +44,7 @@ export default async function handler(
       origin: [
         env.NODE_ENV === "development"
           ? "http://localhost:3000"
-          : "https://madmanager.vercel.app", // VERCEL_URL contains the hash as well
+          : "https://madmanager-production.up.railway.app",
       ],
       responseHeader: ["Access-Control-Allow-Origin"], // necessary for the preflight to pass
     },

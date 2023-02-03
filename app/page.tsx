@@ -7,6 +7,7 @@ import { Button } from "../components/button"
 import { SquigglyLines } from "../components/squiggly-lines"
 import { TypographyH1, TypographyP } from "../components/typography"
 import { siteConfig } from "../lib/site-config"
+import { imageLoader } from "../lib/utils"
 
 // import { Testimonials } from "../components/testimonials"
 
@@ -38,20 +39,24 @@ const Home: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Screenshot</h2>
               <Image
                 alt="A screenshot from Madden 20 Franchise team salary overview"
+                loader={imageLoader}
                 src={siteConfig.demoImages.screenshot}
                 className="object-fill w-96 h-72 rounded-2xl"
                 width={400}
                 height={400}
+                quality={100}
               />
             </div>
             <div className="mt-8 sm:mt-0">
               <h2 className="mb-1 text-lg font-medium">Parsed Data</h2>
               <Image
                 alt="Resulting parsed data from the screenshot"
+                loader={imageLoader}
                 src={siteConfig.demoImages.result}
                 className="object-cover w-96 h-72 rounded-2xl"
                 width={400}
                 height={400}
+                quality={100}
               />
             </div>
           </div>
