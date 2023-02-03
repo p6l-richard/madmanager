@@ -1,3 +1,5 @@
+"use client"
+
 import { NextPage } from "next"
 import Image from "next/image"
 import Link from "next/link"
@@ -39,7 +41,7 @@ const Home: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Screenshot</h2>
               <Image
                 alt="A screenshot from Madden 20 Franchise team salary overview"
-                loader={(props) => imageLoader(props)}
+                loader={imageLoader}
                 src={siteConfig.demoImages.screenshot}
                 className="object-fill w-96 h-72 rounded-2xl"
                 width={400}
@@ -51,7 +53,7 @@ const Home: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Parsed Data</h2>
               <Image
                 alt="Resulting parsed data from the screenshot"
-                loader={(props) => imageLoader(props)}
+                loader={imageLoader}
                 src={siteConfig.demoImages.result}
                 className="object-cover w-96 h-72 rounded-2xl"
                 width={400}
