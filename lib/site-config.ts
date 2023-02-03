@@ -17,9 +17,7 @@ export const siteConfig: SiteConfig = {
     twitter: "https://twitter.com/richardpoelderl",
   },
   demoImages: {
-    screenshot:
-      "https://storage.googleapis.com/madden-regression-bucket/demo_input.jpeg",
-    result:
-      "https://storage.googleapis.com/madden-regression-bucket/output_demo.png",
+    screenshot: "demo_input.jpeg",
+    result: "output_demo.png",
   },
 }
