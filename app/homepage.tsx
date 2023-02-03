@@ -16,9 +16,11 @@ export const HomePage: NextPage = () => {
     <main className="flex flex-col items-center justify-center flex-1 w-full px-4 mt-10 space-y-8 text-center sm:mt-14">
       <TypographyH1 className="max-w-2xl">
         Play Madden Franchise{" "}
-        <span className="relative text-slate-500 whitespace-nowrap">
+        <span className="relative whitespace-nowrap">
           <SquigglyLines />
-          <span className="relative">on steroids</span>
+          <span className="relative text-transparent bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 bg-clip-text">
+            on steroids
+          </span>
         </span>
       </TypographyH1>
 
