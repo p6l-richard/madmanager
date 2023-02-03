@@ -16,7 +16,7 @@ export const HomePage: NextPage = () => {
     <main className="flex flex-col items-center justify-center flex-1 w-full px-4 mt-10 space-y-8 text-center sm:mt-14">
       <TypographyH1 className="max-w-2xl">
         Play Madden Franchise{" "}
-        <span className="relative text-indigo-500 whitespace-nowrap">
+        <span className="relative text-slate-500 whitespace-nowrap">
           <SquigglyLines />
           <span className="relative">on steroids</span>
         </span>
@@ -39,7 +39,7 @@ export const HomePage: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Screenshot</h2>
               <Image
                 alt="A screenshot from Madden 20 Franchise team salary overview"
-                loader={imageLoader}
+                loader={(props) => imageLoader(props)}
                 src={siteConfig.demoImages.screenshot}
                 className="object-fill w-96 h-72 rounded-2xl"
                 width={400}
@@ -51,7 +51,7 @@ export const HomePage: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Parsed Data</h2>
               <Image
                 alt="Resulting parsed data from the screenshot"
-                loader={imageLoader}
+                loader={(props) => imageLoader(props)}
                 src={siteConfig.demoImages.result}
                 className="object-cover w-96 h-72 rounded-2xl"
                 width={400}

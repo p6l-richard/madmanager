@@ -148,7 +148,7 @@ export default function SalaryPage() {
                 <Image
                   alt="screenshot uploaded by the user"
                   className="object-contain rounded-t-md h-96 w-96 rounded-2xl"
-                  loader={imageLoader}
+                  loader={(props) => imageLoader(props)}
                   src={imageId}
                   width={500}
                   height={500}
