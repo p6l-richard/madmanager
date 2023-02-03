@@ -38,7 +38,7 @@ export const HomePage: NextPage = () => {
         <div className="flex flex-col mt-4 mb-16 space-y-10">
           <div className="flex flex-col sm:space-x-2 sm:flex-row">
             <div>
-              <h2 className="mb-1 text-lg font-medium">Screenshot</h2>
+              <h2 className="mb-1 text-lg font-medium">Your photo</h2>
               <Image
                 alt="A screenshot from Madden 20 Franchise team salary overview"
                 loader={(props) => imageLoader(props)}
