@@ -39,7 +39,7 @@ const Home: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Screenshot</h2>
               <Image
                 alt="A screenshot from Madden 20 Franchise team salary overview"
-                loader={imageLoader}
+                loader={(props) => imageLoader(props)}
                 src={siteConfig.demoImages.screenshot}
                 className="object-fill w-96 h-72 rounded-2xl"
                 width={400}
@@ -51,7 +51,7 @@ const Home: NextPage = () => {
               <h2 className="mb-1 text-lg font-medium">Parsed Data</h2>
               <Image
                 alt="Resulting parsed data from the screenshot"
-                loader={imageLoader}
+                loader={(props) => imageLoader(props)}
                 src={siteConfig.demoImages.result}
                 className="object-cover w-96 h-72 rounded-2xl"
                 width={400}
