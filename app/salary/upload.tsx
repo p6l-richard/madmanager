@@ -9,13 +9,20 @@ import { TypographyP } from "../../components/typography"
 import { cn } from "../../lib/utils"
 
 export const UploadImage = ({
-  onUpload: setImageId,
+  onUpload: setImageIds,
 }: {
-  onUpload: Dispatch<SetStateAction<string | undefined>>
+  onUpload: Dispatch<SetStateAction<Array<string> | undefined>>
 }) => {
   // MUTATION TO OBTAIN PRESIGNED URL BEFORE THE UPLOAD
   const postPresignedUrl = useMutation(
     async ({ filename }: { filename: string }) => {
+      console.log("postPresignedUrl -> ")
+      // if (process.env.NODE_ENV === "development") {
+      //   return {
+      //     fields: { key: filename },
+      //     url: "",
+      //   } satisfies GenerateSignedPostPolicyV4Response[0]
+      // }
       const res = await fetch(`/api/upload-url?filename=${filename}`)
       if (!res.ok) throw new Error(res.statusText)
       return (await res.json()) as GenerateSignedPostPolicyV4Response[0]
@@ -26,32 +33,45 @@ export const UploadImage = ({
   // THE DROPZONE FOR THE IMAGE SELECTION
   const { getRootProps, getInputProps, isDragActive, acceptedFiles } =
     useDropzone({
-      maxFiles: 1,
+      maxFiles: 5,
       maxSize: 5 * 2 ** 30, // roughly 5GB
-      multiple: false,
+      multiple: true,
       onDropAccepted: async (files, _event) => {
-        const file = files[0]
-        console.log({ file })
-
-        const signedPostPolicyV4Response = await postPresignedUrl.mutateAsync({
-          filename: file.name,
-        })
-
-        const { success } = await uploadGcs.mutateAsync(
-          signedPostPolicyV4Response
+        const signedPostPolicyV4Responses = await Promise.all(
+          files.map((file) =>
+            postPresignedUrl.mutateAsync({ filename: file.name })
+          )
         )
 
-        if (success) {
-          console.log("success")
-        }
+        console.log({ signedPostPolicyV4Responses })
+        const uploadResults = await Promise.all(
+          signedPostPolicyV4Responses.map((response, index) =>
+            uploadGcs.mutateAsync({ ...response, file: files[index] })
+          )
+        )
+        uploadResults.forEach((result) => {
+          if (!result.success) {
+            console.error("Upload failed for file with key:", result.key)
+          }
+          console.log("Upload success for file with key:", result.key)
+          setImageIds((prev) => {
+            if (prev === undefined) return [result.key]
+            return [...prev, result.key]
+          })
+        })
       },
     })
 
   // MUTATION TO UPLOAD TO GCS
   const uploadGcs = useMutation(
-    async ({ url, fields }: GenerateSignedPostPolicyV4Response[0]) => {
+    async ({
+      url,
+      fields,
+      file,
+    }: GenerateSignedPostPolicyV4Response[0] & { file: File }) => {
+      // if (process.env.NODE_ENV !== "development") {
       // build the request's body
-      const file = acceptedFiles[0]
+      // const file = acceptedFiles[0]
       const formData = new FormData()
       console.log({ fields })
       Object.entries({ ...fields, file }).forEach(([key, value]) => {
@@ -67,11 +87,9 @@ export const UploadImage = ({
         console.error(upload)
         throw Error("Upload failed.")
       }
+      // }
 
-      // set the image in the store
-      setImageId(fields.key)
-
-      return { success: true }
+      return { key: fields.key, success: true }
     }
   )
   return (
@@ -91,8 +109,6 @@ export const UploadImage = ({
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-12 h-12 mx-auto stroke-current stroke-2 animate-spin fill-none"
                 viewBox="0 0 24 24"
-                stroke-linecap="round"
-                stroke-linejoin="round"
               >
                 <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
               </svg>

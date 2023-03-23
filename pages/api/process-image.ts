@@ -74,7 +74,6 @@ export default async function handler(
     if (!operation || !operation.name) {
       return res.status(500).json({ error: "Operation not found" })
     }
-
     // Wait for operation to complete.
     const batchPromiseResponse = await operation.promise()
     // return the operation name

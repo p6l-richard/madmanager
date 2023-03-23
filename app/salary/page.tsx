@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Image from "next/image"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import clsx from "clsx"
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react"
 
 import { Button } from "../../components/button"
@@ -118,7 +119,19 @@ const RightColumn = ({
 
 export default function SalaryPage() {
   // the imageId from our store
-  const [imageId, setImageId] = useState<string>()
+  const [imageIds, setImageIds] = useState<Array<string>>()
+  // the currently displayed image on the screen
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
+
+  const handleImageClick = () => {
+    setCurrentImageIndex((prevIndex) => {
+      if (typeof imageIds === "undefined") {
+        return prevIndex
+      }
+      return (prevIndex + 1) % imageIds.length
+    })
+  }
+
   const [isProcessed, setIsProcessed] = useState(false)
   const queryClient = useQueryClient()
 
@@ -130,6 +143,12 @@ export default function SalaryPage() {
       })
     }
   )
+  console.log({
+    imageIds,
+    currentImageIndex,
+    conditionSingleImg: !!imageIds && imageIds.length === 1,
+    conditionMultipleImgs: !!imageIds && imageIds.length > 0,
+  })
 
   return (
     <div className="md:grid md:grid-cols-2 md:gap-6">
@@ -141,24 +160,53 @@ export default function SalaryPage() {
             Take a screenshot of the salary display and upload it here.
           </TypographyP>
         </div>
-        {!!imageId ? (
-          <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
-            <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
-              <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
-                <Image
-                  alt="screenshot uploaded by the user"
-                  className="object-contain rounded-t-md h-96 w-96 rounded-2xl"
-                  loader={(props) => imageLoader(props)}
-                  src={imageId}
-                  width={500}
-                  height={500}
-                  quality={100}
-                />
+        {!!imageIds ? (
+          <div className="mt-5 grow md:col-span-1 md:mt-0">
+            <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6">
+              <div className="grid grid-rows-1">
+                {imageIds.map(
+                  (imageId, index) => (
+                    console.log({ imageId, index }),
+                    (
+                      // col-start-1 & row-start-1 positions the image in the first column of the grid
+                      <div
+                        className={clsx(
+                          "col-start-1 row-start-1",
+                          // if the image is the current image, it should appear on top of the others
+                          index === currentImageIndex && "z-10 bg-white"
+                        )}
+                        key={imageId}
+                      >
+                        <div
+                          className="relative"
+                          // this creates the stacking effect
+                          style={{
+                            top: index * 5,
+                            left: index * 5,
+                            // transform: `${index * 5}deg`,
+                          }}
+                        >
+                          <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+                            <Image
+                              alt="screenshot uploaded by the user"
+                              className="object-contain rounded-t-md h-96 w-96 rounded-2xl"
+                              loader={(props) => imageLoader(props)}
+                              src={imageId}
+                              width={500}
+                              height={500}
+                              quality={100}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  )
+                )}
               </div>
             </div>
           </div>
         ) : (
-          <UploadImage onUpload={setImageId} />
+          <UploadImage onUpload={setImageIds} />
         )}
       </div>
       {/* right col */}
@@ -169,11 +217,13 @@ export default function SalaryPage() {
             Click the button below and the extracted data will appear here.
           </TypographyP>
         </div>
-        <div className="mt-5 grow md:col-span-1 md:mt-0 sm:overflow-hidden">
-          <div className="flex flex-col px-4 py-5 space-y-6 bg-white sm:p-6 h-96">
+        <div className="mt-5 grow md:col-span-1 md:mt-0">
+          <div className="flex flex-col h-full px-4 py-5 space-y-6 bg-white sm:p-6">
             <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
               <RightColumn
-                imageId={imageId}
+                imageId={
+                  imageIds ? imageIds[currentImageIndex ?? 0] : undefined
+                }
                 onProcess={() => setIsProcessed(true)}
               />
             </div>
@@ -181,7 +231,7 @@ export default function SalaryPage() {
         </div>
       </div>
       {/* footer w/ cta? */}
-      {Boolean(isProcessed) && !!imageId && (
+      {Boolean(isProcessed) && !!imageIds && (
         <div className="flex flex-col items-center justify-center col-span-2">
           <TypographyH3 className="mt-2">Looks good?</TypographyH3>
           <Button
