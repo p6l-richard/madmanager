@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { type google } from "@google-cloud/documentai/build/protos/protos"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import clsx from "clsx"
 import { ClipboardCheck, ClipboardCopy, Loader2 } from "lucide-react"
@@ -61,8 +62,8 @@ const processImage = async ({
     console.error(res)
     throw Error("Failed to process image.")
   }
-  const parsedSalary = (await res.json()) as SalaryData
-  return parsedSalary
+  const operation = (await res.json()) as google.longrunning.Operation
+  return operation
 }
 interface RightColumnParams {
   imageIds: [string] | undefined
@@ -74,6 +75,7 @@ const RightColumn = ({
   onProcess,
   currentImageIndex,
 }: RightColumnParams) => {
+  const [operationId, setOperationId] = useState<string | undefined>(undefined)
   const queryClient = useQueryClient()
   const imageData = useMutation(
     ["process-image", imageIds],
@@ -83,11 +85,32 @@ const RightColumn = ({
     {
       onSuccess: (data) => {
         console.log("CHECK THE RESPONSE PLS:", data)
+        setOperationId(data.name)
         // queryClient.setQueryData(["salary", imageId], data)
         // onProcess()
       },
     }
   )
+  const operation = useQuery(
+    ["operations", operationId],
+    async () => {
+      const response = await fetch(`/api/operations/${operationId}`)
+      const data = await response.json()
+      return data
+    },
+    {
+      refetchInterval: (data) => (data && !data.done ? 5000 : false), // poll every 5 seconds
+      enabled: imageData.status === "success" && !imageData.data?.done,
+      onSuccess: (data) => {
+        console.log("CHECK THE RESPONSE PLS:", data)
+        if (data.done) {
+          // fetch the salary for this operation
+          queryClient.invalidateQueries(["salary", operationId])
+        }
+      },
+    }
+  )
+
   const salary = useQuery(
     ["salary", imageIds, currentImageIndex],
     () =>

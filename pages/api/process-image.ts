@@ -77,7 +77,7 @@ export default async function handler(
     if (!operation || !operation.name) {
       return res.status(500).json({ error: "Operation not found" })
     }
-    return res.status(200).json({ operationName: operation.name })
+    return res.status(200).json({ operation })
   } catch (error) {
     console.log("ERROR FETCHING FROM GOOOOOGLE")
     console.dir(error, { depth: 5 })
