@@ -9,9 +9,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const operationId = req.query.operationId as string
   const client = new DocumentProcessorServiceClient()
-  const name = `projects/852342095963/locations/us/operations/${operationId}`
+  const name = `projects/852342095963/locations/us/operations/${req.query.operationId}`
 
   const request = new protos.google.longrunning.GetOperationRequest({ name })
   const [operation] = await client.operationsClient.getOperation(request)

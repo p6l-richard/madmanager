@@ -4,6 +4,7 @@ import { type google } from "@google-cloud/documentai/build/protos/protos"
 import { Storage } from "@google-cloud/storage"
 import { Image } from "@prisma/client"
 
+import { toast } from "../../components/toast"
 import {
   GOOGLE_CLOUD_STORAGE_BUCKET_NAME,
   MIME_TYPE,
@@ -11,6 +12,10 @@ import {
 import { env } from "../../lib/env/server.mjs"
 import { prisma } from "../../lib/server/db"
 import { convertCurrencyString } from "../../lib/server/parsers"
+// note (richard): The uri field cannot currently be used for processing a document.
+// If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
+// @link: https://stackoverflow.com/a/74265697/5608461
+export  const gcsOutputUri = `gs://${GOOGLE_CLOUD_STORAGE_BUCKET_NAME}/${env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX}`
 
 // a handler to parse send an image to the google cloud document ai api and persist it in the google cloud storage, then return the parsed data
 export default async function handler(
@@ -44,10 +49,6 @@ export default async function handler(
   })
 
   // Configure the batch process request.
-  // note (richard): The uri field cannot currently be used for processing a document.
-  // If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
-  // @link: https://stackoverflow.com/a/74265697/5608461
-  const gcsOutputUri = `gs://${GOOGLE_CLOUD_STORAGE_BUCKET_NAME}/${env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX}`
   const processorResourceName = `projects/${env.GOOGLE_CLOUD_PROJECT_NUMBER}/locations/${env.GOOGLE_DOCUMENT_AI_LOCATION}/processors/${env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID}`
   const request = {
     name: processorResourceName,
@@ -74,10 +75,29 @@ export default async function handler(
     // Note: first request to the service takes longer than subsequent
     // requests.
     const [operation] = await documentAiClient.batchProcessDocuments(request)
-    if (!operation || !operation.name) {
-      return res.status(500).json({ error: "Operation not found" })
+    if (!operation) {
+      return res
+        .status(500)
+        .json({ error: "Something went wrong creating the batch process" })
     }
-    return res.status(200).json({ operation })
+    if (!operation.name) {
+      return res
+        .status(500)
+        .json({ error: "Batch process' operation has a missing .name key" })
+    }
+    // store the operation id in the database to reconcile images later
+    const dbLro = await prisma.longRunningOperation.create({
+      data: {
+        lroId: operation.name.split("/").pop() as string, // don't @ me
+        lroName: operation.name,
+        images: {
+          connect: images.map((image) => ({ id: image.id })),
+        },
+      },
+    })
+    return res.status(200).json({
+      operationId: dbLro.lroId,
+    })
   } catch (error) {
     console.log("ERROR FETCHING FROM GOOOOOGLE")
     console.dir(error, { depth: 5 })
@@ -245,6 +265,7 @@ const _unused = async (
           },
         },
         operationName: operation.name,
+        LongRunningOperation
         processorResourceName,
         outputGcsUri: gcsOutputUri,
         image: {

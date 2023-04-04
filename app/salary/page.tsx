@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Image from "next/image"
+import { protos } from "@google-cloud/documentai"
 import { type google } from "@google-cloud/documentai/build/protos/protos"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import clsx from "clsx"
@@ -62,7 +63,7 @@ const processImage = async ({
     console.error(res)
     throw Error("Failed to process image.")
   }
-  const operation = (await res.json()) as google.longrunning.Operation
+  const operation = (await res.json()) as { operationId: string }
   return operation
 }
 interface RightColumnParams {
@@ -85,7 +86,7 @@ const RightColumn = ({
     {
       onSuccess: (data) => {
         console.log("CHECK THE RESPONSE PLS:", data)
-        setOperationId(data.name)
+        setOperationId(data.operationId)
         // queryClient.setQueryData(["salary", imageId], data)
         // onProcess()
       },
@@ -95,15 +96,32 @@ const RightColumn = ({
     ["operations", operationId],
     async () => {
       const response = await fetch(`/api/operations/${operationId}`)
-      const data = await response.json()
+      const data =
+        (await response.json()) as protos.google.longrunning.Operation
       return data
     },
     {
-      refetchInterval: (data) => (data && !data.done ? 5000 : false), // poll every 5 seconds
-      enabled: imageData.status === "success" && !imageData.data?.done,
+      refetchInterval: (data) => {
+        console.log("REFETCH INTERVAL", !data?.done ? 5000 : false)
+        return !data?.done ? 5000 : false
+      }, // poll every 5 seconds
+      enabled:
+        imageData.status === "success" && Boolean(imageData.data?.operationId),
       onSuccess: (data) => {
         console.log("CHECK THE RESPONSE PLS:", data)
         if (data.done) {
+          console.log("--- DONE ---")
+          toast({
+            content: (
+              <>
+                <ToastTitle>🎉 Congratulations 🎉</ToastTitle>
+                <ToastDescription>
+                  The AI has finished parsing the data. We&apos;ll load the
+                  table for you to review now.
+                </ToastDescription>
+              </>
+            ),
+          })
           // fetch the salary for this operation
           queryClient.invalidateQueries(["salary", operationId])
         }
@@ -140,9 +158,14 @@ const RightColumn = ({
   ) : imageData.status === "loading" ? (
     <Button disabled>
       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-      Hang on, this might take a while...
+      Preparing the AI parsing...
     </Button>
-  ) : imageData.status === "success" && salary.data ? (
+  ) : imageData.status === "success" ? (
+    <Button disabled>
+      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      The AI is now parsing the data. This might take a while...
+    </Button>
+  ) : salary.data ? (
     <Table imageId={imageIds[currentImageIndex]} data={salary.data} />
   ) : (
     <></>
