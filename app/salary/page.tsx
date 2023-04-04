@@ -45,15 +45,17 @@ export type SalaryData = [
   string
 ][]
 
-const processImage = async ({ imageId }: { imageId: string }) => {
-  if (process.env.NODE_ENV === "development") {
-    return new Promise((resolve) => {
-      return resolve(tableData)
-    })
-  }
+const processImage = async ({
+  imageIds,
+}: Pick<RightColumnParams, "imageIds">) => {
+  // if (process.env.NODE_ENV === "development") {
+  //   return new Promise((resolve) => {
+  //     return resolve(tableData)
+  //   })
+  // }
   const res = await fetch(`/api/process-image`, {
     method: "POST",
-    body: JSON.stringify({ imageId }),
+    body: JSON.stringify({ imageIds }),
   })
   if (!res.ok) {
     console.error(res)
@@ -62,45 +64,52 @@ const processImage = async ({ imageId }: { imageId: string }) => {
   const parsedSalary = (await res.json()) as SalaryData
   return parsedSalary
 }
-const RightColumn = ({
-  imageId,
-  onProcess,
-}: {
-  imageId: string | undefined
+interface RightColumnParams {
+  imageIds: [string] | undefined
+  currentImageIndex: number
   onProcess: () => void
-}) => {
+}
+const RightColumn = ({
+  imageIds,
+  onProcess,
+  currentImageIndex,
+}: RightColumnParams) => {
   const queryClient = useQueryClient()
   const imageData = useMutation(
-    ["process-image", imageId],
-    ({ imageId }: { imageId: string }) => {
-      return processImage({ imageId })
+    ["process-image", imageIds],
+    ({ imageIds }: Pick<RightColumnParams, "imageIds">) => {
+      return processImage({ imageIds })
     },
     {
       onSuccess: (data) => {
-        queryClient.setQueryData(["salary", imageId], data)
-        onProcess()
+        console.log("CHECK THE RESPONSE PLS:", data)
+        // queryClient.setQueryData(["salary", imageId], data)
+        // onProcess()
       },
     }
   )
   const salary = useQuery(
-    ["salary", imageId],
+    ["salary", imageIds, currentImageIndex],
     () =>
       // @ts-expect-error imageId can be undefined but the query won't run thanks to the enabled option
-      fetchSalary({ imageId }),
+      fetchSalary({ imageId: imageIds.length && imageIds[currentImageIndex] }),
     {
       // we have to wait for the other two mutations to have happened before we can run this query
-      enabled: Boolean(imageId) && imageData.isSuccess,
+      enabled:
+        Boolean(imageIds?.length) &&
+        imageData.isSuccess &&
+        Boolean(currentImageIndex),
     }
   )
 
   // if the left column hasn't got an imageId set, we don't want to render anything
-  if (!imageId) return <></>
+  if (!imageIds?.length) return <></>
 
   return imageData.status === "idle" ? (
     <Button
       onClick={() => {
-        console.log("AI magic Button: ", { imageId })
-        return imageData.mutateAsync({ imageId })
+        console.log("AI magic Button: ", { imageIds })
+        return imageData.mutateAsync({ imageIds })
       }}
     >
       AI magic 🪄
@@ -111,7 +120,7 @@ const RightColumn = ({
       Hang on, this might take a while...
     </Button>
   ) : imageData.status === "success" && salary.data ? (
-    <Table imageId={imageId} data={salary.data} />
+    <Table imageId={imageIds[currentImageIndex]} data={salary.data} />
   ) : (
     <></>
   )
@@ -221,9 +230,8 @@ export default function SalaryPage() {
           <div className="flex flex-col h-full px-4 py-5 space-y-6 bg-white sm:p-6">
             <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm min-h-[24rem]">
               <RightColumn
-                imageId={
-                  imageIds ? imageIds[currentImageIndex ?? 0] : undefined
-                }
+                imageIds={imageIds}
+                currentImageIndex={currentImageIndex}
                 onProcess={() => setIsProcessed(true)}
               />
             </div>
