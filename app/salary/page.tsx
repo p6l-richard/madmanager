@@ -186,7 +186,7 @@ export default function SalaryPage() {
                             // transform: `${index * 5}deg`,
                           }}
                         >
-                          <div className="relative flex flex-col items-center justify-center flex-1 max-h-full mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+                          <div className="relative flex flex-col items-center justify-center flex-1 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
                             <Image
                               alt="screenshot uploaded by the user"
                               className="object-contain rounded-t-md h-96 w-96 rounded-2xl"
@@ -219,7 +219,7 @@ export default function SalaryPage() {
         </div>
         <div className="mt-5 grow md:col-span-1 md:mt-0">
           <div className="flex flex-col h-full px-4 py-5 space-y-6 bg-white sm:p-6">
-            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm">
+            <div className="relative flex flex-col items-center justify-center flex-1 max-h-full pl-4 mt-1 border-2 border-solid rounded-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-500 sm:text-sm min-h-[24rem]">
               <RightColumn
                 imageId={
                   imageIds ? imageIds[currentImageIndex ?? 0] : undefined
