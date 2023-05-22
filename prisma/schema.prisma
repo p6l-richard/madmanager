@@ -11,39 +11,35 @@ datasource db {
 }
 
 model Image {
-    id              String           @id @default(cuid())
-    filename        String
-    bucketName      String
-    publicUrl       String?
-    gcsUri          String?
-    createdAt       DateTime         @default(now())
-    updatedAt       DateTime         @updatedAt
-    documentProcess DocumentProcess?
-    salary          Salary?
+    id                     String                @id @default(cuid())
+    filename               String
+    bucketName             String
+    publicUrl              String?
+    gcsUri                 String?
+    createdAt              DateTime              @default(now())
+    updatedAt              DateTime              @updatedAt
+    salary                 Salary?
+    LongRunningOperation   LongRunningOperation? @relation(fields: [longRunningOperationId], references: [id])
+    longRunningOperationId String?
 }
 
-model DocumentProcess {
-    id                    String @id @default(cuid())
-    // every process is linked to an image (1:1)
-    imageId               String @unique
-    image                 Image  @relation(fields: [imageId], references: [id])
-    // the request object's data
-    processorResourceName String
-    outputGcsUri          String
-    // the process operation's data
-    operationName         String
+model LongRunningOperation {
+    id      String  @id @default(cuid())
+    // these come from google cloud's long running operation directly
+    lroName String  @unique
+    lroId   String  @unique
+    // every operation can have anywhere from 1 to many images
+    images  Image[]
 
-    createdAt DateTime               @default(now())
-    updatedAt DateTime               @updatedAt
-    // every process has a single response linked (1:1)
-    result    DocumentProcessResult?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // every operation have anywhere from 1 to many results
+    documentProcessResults DocumentProcessResult[]
 }
 
 model DocumentProcessResult {
-    id                String          @id @default(cuid())
-    // every result is linked to a single process (1:1)
-    documentProcessId String          @unique
-    documentProcess   DocumentProcess @relation(fields: [documentProcessId], references: [id])
+    id String @id @default(cuid())
 
     filename   String
     bucketName String
@@ -51,6 +47,9 @@ model DocumentProcessResult {
 
     fileContent  Json
     textResponse Json
+
+    longRunningOperationId String?
+    longRunningOperation   LongRunningOperation? @relation(fields: [longRunningOperationId], references: [id])
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

@@ -1,7 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next"
 import { DocumentProcessorServiceClient } from "@google-cloud/documentai"
+import { type google } from "@google-cloud/documentai/build/protos/protos"
 import { Storage } from "@google-cloud/storage"
+import { Image } from "@prisma/client"
 
+import { toast } from "../../components/toast"
 import {
   GOOGLE_CLOUD_STORAGE_BUCKET_NAME,
   MIME_TYPE,
@@ -9,26 +12,33 @@ import {
 import { env } from "../../lib/env/server.mjs"
 import { prisma } from "../../lib/server/db"
 import { convertCurrencyString } from "../../lib/server/parsers"
+// note (richard): The uri field cannot currently be used for processing a document.
+// If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
+// @link: https://stackoverflow.com/a/74265697/5608461
+export  const gcsOutputUri = `gs://${GOOGLE_CLOUD_STORAGE_BUCKET_NAME}/${env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX}`
 
 // a handler to parse send an image to the google cloud document ai api and persist it in the google cloud storage, then return the parsed data
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { imageId } = JSON.parse(req.body)
+  const { imageIds } = JSON.parse(req.body)
 
-  const image = await prisma.image.findUnique({
-    where: { id: imageId },
+  const images = await prisma.image.findMany({
+    where: { id: { in: imageIds } },
     include: { documentProcess: { include: { result: true } } },
   })
   // return 404 if not found
-  if (!image) {
+  if (!images.length) {
     return res.status(404).json({ error: "Image not found" })
   }
-  // return the result if it already exists
-  if (image.documentProcess?.result) {
-    return res.status(200).json(image.documentProcess.result)
+  // return the result if it already exists on every image
+  if (images.every((image) => image?.documentProcess?.result)) {
+    return res
+      .status(200)
+      .json(images.map((image) => image?.documentProcess?.result))
   }
+
   // Instantiate the documentAiClient
   const documentAiClient = new DocumentProcessorServiceClient({
     projectId: env.GOOGLE_CLOUD_PROJECT_ID,
@@ -39,21 +49,15 @@ export default async function handler(
   })
 
   // Configure the batch process request.
-  // note (richard): The uri field cannot currently be used for processing a document.
-  // If you want to process documents stored in Google Cloud Storage, you will need to use Batch Processing following the examples provided on this page.
-  // @link: https://stackoverflow.com/a/74265697/5608461
-  const gcsOutputUri = `gs://${GOOGLE_CLOUD_STORAGE_BUCKET_NAME}/${env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX}`
   const processorResourceName = `projects/${env.GOOGLE_CLOUD_PROJECT_NUMBER}/locations/${env.GOOGLE_DOCUMENT_AI_LOCATION}/processors/${env.GOOGLE_DOCUMENT_AI_PROCESSOR_ID}`
   const request = {
     name: processorResourceName,
     inputDocuments: {
       gcsDocuments: {
-        documents: [
-          {
-            gcsUri: `gs://${image.bucketName}/${image.id}`, // get the google cloud storage bucket uri from the request body
-            mimeType: MIME_TYPE, // this is a guess for now
-          },
-        ],
+        documents: images.map((image) => ({
+          gcsUri: `gs://${image.bucketName}/${image.id}`, // get the google cloud storage bucket uri from the request body
+          mimeType: MIME_TYPE, // this is a guess for now
+        })),
       },
     },
     documentOutputConfig: {
@@ -71,74 +75,29 @@ export default async function handler(
     // Note: first request to the service takes longer than subsequent
     // requests.
     const [operation] = await documentAiClient.batchProcessDocuments(request)
-    if (!operation || !operation.name) {
-      return res.status(500).json({ error: "Operation not found" })
+    if (!operation) {
+      return res
+        .status(500)
+        .json({ error: "Something went wrong creating the batch process" })
     }
-
-    // Wait for operation to complete.
-    const batchPromiseResponse = await operation.promise()
-    // return the operation name
-    console.log("Batch processing complete for operation:", operation.name)
-
-    // Get the results of the batch process using the operation name to parse the salaryData
-    const bucket = new Storage({
-      projectId: env.GOOGLE_CLOUD_PROJECT_ID,
-      credentials: {
-        client_email: env.GOOGLE_CLOUD_CLIENT_EMAIL,
-        private_key: env.GOOGLE_CLOUD_PRIVATE_KEY,
+    if (!operation.name) {
+      return res
+        .status(500)
+        .json({ error: "Batch process' operation has a missing .name key" })
+    }
+    // store the operation id in the database to reconcile images later
+    const dbLro = await prisma.longRunningOperation.create({
+      data: {
+        lroId: operation.name.split("/").pop() as string, // don't @ me
+        lroName: operation.name,
+        images: {
+          connect: images.map((image) => ({ id: image.id })),
+        },
       },
-    }).bucket(image.bucketName)
-
-    const file = bucket.file(
-      // subfolder(s) + /0/ + filename
-      `${
-        env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX + operation.name.split("/").pop()
-      }/0/${image.id}-0.json` // -0.json is added automatically?
-    )
-    const fileDownload = await file.download()
-    const json = JSON.parse(fileDownload[0].toString("utf8"))
-    const salaryData = parseSalaryDataFromText(json.text).map((row) =>
-      row.map(convertCurrencyString)
-    )
-    // Now that we have obtained our parsed result, persist everyting to the database
-    Promise.all([
-      // store the document ai result
-      await prisma.documentProcess.create({
-        data: {
-          result: {
-            create: {
-              bucketName: image.bucketName,
-              fileContent: json,
-              publicUrl: file.publicUrl(),
-              textResponse: json.text,
-              filename: file.name,
-            },
-          },
-          operationName: operation.name,
-          processorResourceName,
-          outputGcsUri: gcsOutputUri,
-          image: {
-            connect: {
-              id: image.id,
-            },
-          },
-        },
-      }),
-      // store our parsed data (from the result)
-      await prisma.salary.create({
-        data: {
-          data: salaryData,
-          image: {
-            connect: {
-              id: image.id,
-            },
-          },
-        },
-      }),
-    ])
-
-    // now return the data
-    return res.status(200).json(salaryData)
+    })
+    return res.status(200).json({
+      operationId: dbLro.lroId,
+    })
   } catch (error) {
     console.log("ERROR FETCHING FROM GOOOOOGLE")
     console.dir(error, { depth: 5 })
@@ -260,3 +219,75 @@ const rowRegexes = [
   // regex to match the salary for the fifth year as above
   /^\$[0-9]+([,\.]{0,1}[0-9]{0,2})(M|K)?$/,
 ]
+
+// THIS NEEDS TO MOVE ELSEWHERE!
+// get the first function from the following object:
+const _unused = async (
+  operation: google.longrunning.Operation,
+  image: Image
+) => {
+  // Wait for operation to complete.
+  // const batchPromiseResponse = await operation.promise()
+  console.log("Batch processing complete for operation:", operation.name)
+
+  // Get the results of the batch process using the operation name to parse the salaryData
+  const bucket = new Storage({
+    projectId: env.GOOGLE_CLOUD_PROJECT_ID,
+    credentials: {
+      client_email: env.GOOGLE_CLOUD_CLIENT_EMAIL,
+      private_key: env.GOOGLE_CLOUD_PRIVATE_KEY,
+    },
+  }).bucket(image.bucketName)
+
+  const file = bucket.file(
+    // subfolder(s) + /0/ + filename
+    `${
+      env.GOOGLE_CLOUD_STORAGE_OUTPUT_PREFIX + operation.name.split("/").pop()
+    }/0/${image.id}-0.json` // -0.json is added automatically?
+  )
+  const fileDownload = await file.download()
+  const json = JSON.parse(fileDownload[0].toString("utf8"))
+  const salaryData = parseSalaryDataFromText(json.text).map((row) =>
+    row.map(convertCurrencyString)
+  )
+  // Now that we have obtained our parsed result, persist everyting to the database
+  Promise.all([
+    // store the document ai result
+    await prisma.documentProcess.create({
+      data: {
+        result: {
+          create: {
+            bucketName: image.bucketName,
+            fileContent: json,
+            publicUrl: file.publicUrl(),
+            textResponse: json.text,
+            filename: file.name,
+          },
+        },
+        operationName: operation.name,
+        LongRunningOperation
+        processorResourceName,
+        outputGcsUri: gcsOutputUri,
+        image: {
+          connect: {
+            id: image.id,
+          },
+        },
+      },
+    }),
+    // store our parsed data (from the result)
+    await prisma.salary.create({
+      data: {
+        data: salaryData,
+        image: {
+          connect: {
+            id: image.id,
+          },
+        },
+      },
+    }),
+  ])
+
+  // now return the data
+  return res.status(200).json(salaryData)
+}
